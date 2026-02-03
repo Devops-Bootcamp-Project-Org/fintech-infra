@@ -2,7 +2,7 @@ provider "aws" {
   region = "us-east-2"
 }
 
-resource "aws_acm_certificate" "shollztech_cert_cert" {
+resource "aws_acm_certificate" "shollztech_cert" {
   domain_name       = var.domain_name
   subject_alternative_names = var.san_domains
   validation_method = "DNS"
