@@ -5,7 +5,7 @@
 variable "aws_account_id" {
   description = "AWS Account ID"
   type        = string
-  default     = "029939913795"
+  default     = "805703880776"
 }
 
 variable "aws_region" {
@@ -52,7 +52,7 @@ variable "cluster_name" {
 variable "rolearn" {
   description = "IAM role ARN to be added to the aws-auth configmap as admin"
   type        = string
-  default     = "arn:aws:iam::029939913795:role/terraform-create-role"
+  default     = "arn:aws:iam::805703880776:role/terraform-create-role"
 }
 
 
@@ -85,19 +85,19 @@ variable "key_name" {
 variable "domain_name" {
   description = "Primary domain name for certificate issuance"
   type        = string
-  default     = "*.fintech-groupb.com"
+  default     = "*.shollztech.com"
 }
 
 variable "san_domains" {
   description = "SANs (Subject Alternative Names) for SSL certificate"
   type        = list(string)
-  default     = ["*.fintech-groupb.com"]
+  default     = ["*.shollztech.com"]
 }
 
 variable "route53_zone_id" {
   description = "Route 53 hosted zone ID for domain validation"
   type        = string
-  default     = "Z05115983GSCMPPDO08R8"
+  default     = "Z07155713A5AEXZCERRLH"
 }
 
 ################################################################################
