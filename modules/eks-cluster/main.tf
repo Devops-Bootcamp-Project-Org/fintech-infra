@@ -47,7 +47,7 @@ module "eks" {
   cluster_enabled_log_types   = ["api", "audit", "authenticator", "controllerManager", "scheduler"]
 
   ##############################################
-  # Core Add-ons (Always include vpc-cni)
+  # Core Add-ons Always include vpc-cni
   ##############################################
   cluster_addons = {
     vpc-cni = {
