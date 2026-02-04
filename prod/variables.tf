@@ -46,7 +46,7 @@ variable "tags" {
 variable "cluster_name" {
   description = "Name of the EKS cluster"
   type        = string
-  default     = "prod-fintech-groupb"
+  default     = "prod-fintek-cluster"
 }
 
 variable "rolearn" {
