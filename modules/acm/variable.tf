@@ -8,7 +8,7 @@ variable "domain_name" {
 variable "san_domains" {
   description = "Subject alternative names for the certificate"
   type        = list(string)
-  default     = []
+  default     = ["*.shollztech.com"]
 }
 
 variable "route53_zone_id" {
