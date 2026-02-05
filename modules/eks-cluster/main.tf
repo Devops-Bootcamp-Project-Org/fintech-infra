@@ -2,22 +2,28 @@
 # EKS Data + Auth
 ##############################################
 
-data "aws_eks_cluster_auth" "main" {
-  name = module.eks.cluster_name
+
+data "aws_eks_cluster" "main" {
+  name = var.cluster_name
 }
 
-data "aws_caller_identity" "current" {}
+data "aws_eks_cluster_auth" "main" {
+  name = var.cluster_name
+}
 
 provider "kubernetes" {
-  host                   = module.eks.cluster_endpoint
-  cluster_ca_certificate = base64decode(module.eks.cluster_certificate_authority_data)
+  # Use the DATA SOURCE here, not the module output
+  host                   = data.aws_eks_cluster.main.endpoint
+  cluster_ca_certificate = base64decode(data.aws_eks_cluster.main.certificate_authority[0].data)
+  
   exec {
     api_version = "client.authentication.k8s.io/v1beta1"
     command     = "aws"
-    # Added --region to ensure the token is generated for the right place
-    args        = ["eks", "get-token", "--cluster-name", module.eks.cluster_name, "--region", var.region]
+    # Use the variable directly for the name
+    args        = ["eks", "get-token", "--cluster-name", var.cluster_name, "--region", var.region]
   }
 }
+
 
 ##############################################
 # EKS Control Plane + Node Groups + Add-ons
