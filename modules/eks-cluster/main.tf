@@ -13,14 +13,14 @@ data "aws_eks_cluster_auth" "main" {
 
 provider "kubernetes" {
   # Use the DATA SOURCE here, not the module output
-  host                   = data.aws_eks_cluster.main.endpoint
-  cluster_ca_certificate = base64decode(data.aws_eks_cluster.main.certificate_authority[0].data)
+  host                   = module.eks.cluster_endpoint
+  cluster_ca_certificate = base64decode(data.aws_eks_cluster.certificate_authority_data)
   
   exec {
     api_version = "client.authentication.k8s.io/v1beta1"
     command     = "aws"
     # Use the variable directly for the name
-    args        = ["eks", "get-token", "--cluster-name", var.cluster_name, "--region", var.region]
+    args        = ["eks", "get-token", "--cluster-name", module.eks.cluster_name, "--region", var.region]
   }
 }
 
@@ -57,7 +57,7 @@ module "eks" {
   ##############################################
   module "eks" {
   source  = "terraform-aws-modules/eks/aws"
-  version = "~> 20.0" # Ensure you're on a modern version
+  version = "~> 20.0"
 
   cluster_name    = var.cluster_name
   cluster_version = "1.29"
