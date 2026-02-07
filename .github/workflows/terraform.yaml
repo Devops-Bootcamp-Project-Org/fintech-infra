@@ -57,6 +57,16 @@ jobs:
         working-directory: ${{ env.TF_DIR }}
         run: terraform fmt -check
 
+      - name: Manual Cleanup of Orphaned Resources
+        run: |
+          aws iam detach-role-policy --role-name eks-client-ssm-role --policy-arn arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore || true
+          aws iam detach-role-policy --role-name github-runner-ssm-role --policy-arn arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore || true
+          aws iam delete-role --role-name eks-client-ssm-role || true
+          aws iam delete-role --role-name github-runner-ssm-role || true
+          aws iam delete-policy --policy-arn arn:aws:iam::805703880776:policy/prod-GitHubECRPolicy || true
+          aws iam delete-policy --policy-arn arn:aws:iam::805703880776:policy/prod-GitHubEKSPolicy || true
+          aws logs delete-log-group --log-group-name "/aws/eks/prod-fintek-cluster/cluster" --region us-east-2 || true
+
       - name: Terraform init
         working-directory: ${{ env.TF_DIR }}
         run: terraform init -upgrade -backend-config="key=${{ env.TF_ENV }}/terraform.tfstate"
