@@ -1,5 +1,10 @@
-provider "aws" {
-  region = "us-east-2"
+########################################
+# ✅ OIDC Provider Lookup
+# Using a data source prevents "AlreadyExists" errors
+########################################
+
+data "aws_iam_openid_connect_provider" "github" {
+  url = "https://token.actions.githubusercontent.com"
 }
 
 ########################################
@@ -9,13 +14,14 @@ provider "aws" {
 resource "aws_iam_role" "github_actions_role" {
   name = "${var.environment}-GitHubActionsECR"
 
+  # Reference the data source ARN directly
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
       {
         Effect = "Allow"
         Principal = {
-          Federated = "arn:aws:iam::${var.aws_account_id}:oidc-provider/token.actions.githubusercontent.com"
+          Federated = data.aws_iam_openid_connect_provider.github.arn
         }
         Action = "sts:AssumeRoleWithWebIdentity"
         Condition = {
@@ -31,16 +37,6 @@ resource "aws_iam_role" "github_actions_role" {
   })
 }
 
-resource "aws_iam_openid_connect_provider" "github_oidc" {
-  url = "https://token.actions.githubusercontent.com"
-
-  client_id_list = ["sts.amazonaws.com"]
-
-  thumbprint_list = [
-    "6938fd4d98bab03faadb97b34396831e3780aea1"
-  ]
-}
-
 resource "aws_iam_policy" "github_ecr_policy" {
   name        = "${var.environment}-GitHubECRPolicy"
   description = "Permissions for GitHub Actions to push/pull from ECR"
@@ -49,8 +45,8 @@ resource "aws_iam_policy" "github_ecr_policy" {
     Version = "2012-10-17"
     Statement = [
       {
-        Effect = "Allow"
-        Action = "ecr:GetAuthorizationToken"
+        Effect   = "Allow"
+        Action   = "ecr:GetAuthorizationToken"
         Resource = "*"
       },
       {
@@ -62,23 +58,18 @@ resource "aws_iam_policy" "github_ecr_policy" {
           "ecr:DescribeRepositories",
           "ecr:ListImages",
           "ecr:DescribeImages",
-          "ecr:BatchGetImage"
-        ]
-        Resource = "arn:aws:ecr:${var.aws_region}:${var.aws_account_id}:*"
-      },
-      {
-        Effect = "Allow"
-        Action = [
+          "ecr:BatchGetImage",
           "ecr:InitiateLayerUpload",
           "ecr:UploadLayerPart",
           "ecr:CompleteLayerUpload",
           "ecr:PutImage"
         ]
-        Resource = "arn:aws:ecr:${var.aws_region}:${var.aws_account_id}:*"
+        # Using dynamic variables for account/region safety
+        Resource = "arn:aws:ecr:${var.aws_region}:${var.aws_account_id}:repository/*"
       },
       {
-        Effect = "Allow"
-        Action = "sts:TagSession"
+        Effect   = "Allow"
+        Action   = "sts:TagSession"
         Resource = "*"
       }
     ]
@@ -102,10 +93,8 @@ resource "aws_iam_policy" "github_eks_policy" {
         Resource = "*"
       },
       {
-        Effect = "Allow"
-        Action = [
-          "ssm:GetParameter"
-        ]
+        Effect   = "Allow"
+        Action   = "ssm:GetParameter"
         Resource = "*"
       }
     ]
@@ -152,7 +141,3 @@ resource "aws_iam_role_policy_attachment" "cni_policy_attachment" {
   role       = aws_iam_role.cni_role.name
   policy_arn = "arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy"
 }
-
-
-
-
