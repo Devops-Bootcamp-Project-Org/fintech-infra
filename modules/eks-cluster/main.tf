@@ -167,7 +167,7 @@ resource "kubernetes_cluster_role_binding_v1" "eks_admins_binding" {
 }
 
 ##############################################
-# Kubernetes Namespaces
+# Kubernetes Namespaces.
 ##############################################
 
 resource "kubernetes_namespace_v1" "fintech" {
