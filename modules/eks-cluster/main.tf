@@ -55,37 +55,46 @@ module "eks" {
   ##############################################
   # Core Add-ons Always include vpc-cni
   ##############################################
-  cluster_addons = {
-    vpc-cni = {
-      most_recent              = true
-      service_account_role_arn = var.cni_role_arn
-      resolve_conflicts_on_update        = "OVERWRITE"
-    }
+  module "eks" {
+  source  = "terraform-aws-modules/eks/aws"
+  version = "~> 20.0" # Ensure you're on a modern version
 
-    coredns = {
-      most_recent       = true
+  cluster_name    = var.cluster_name
+  cluster_version = "1.29"
+
+  # Use the Resource Name for the provider to avoid the "Data Source" crash
+  # (Make sure your kubernetes provider block uses module.eks.cluster_endpoint)
+
+  cluster_addons = {
+    "vpc-cni" = {
+      most_recent              = true
+      # Ensure this variable is actually being passed in your GitHub Action!
+      service_account_role_arn = var.cni_role_arn
       resolve_conflicts_on_create = "OVERWRITE"
       resolve_conflicts_on_update = "OVERWRITE"
     }
-
-    kube-proxy = {
-      most_recent       = true
+    "coredns" = {
+      most_recent              = true
       resolve_conflicts_on_create = "OVERWRITE"
-      resolve_conflicts_on_create = "OVERWRITE"
+      resolve_conflicts_on_update = "OVERWRITE"
     }
-
-    eks-pod-identity-agent = {
-      most_recent       = true
+    "kube-proxy" = {
+      most_recent              = true
       resolve_conflicts_on_create = "OVERWRITE"
-      resolve_conflicts_on_create = "OVERWRITE"
+      resolve_conflicts_on_update = "OVERWRITE"
     }
-
-    aws-ebs-csi-driver = {
-      most_recent       = true
+    "eks-pod-identity-agent" = {
+      most_recent              = true
       resolve_conflicts_on_create = "OVERWRITE"
-      
+      resolve_conflicts_on_update = "OVERWRITE"
+    }
+    "aws-ebs-csi-driver" = {
+      most_recent              = true
+      resolve_conflicts_on_create = "OVERWRITE"
+      resolve_conflicts_on_update = "OVERWRITE"
     }
   }
+}
 
   ##############################################
   # Managed Node Groups - Best Practice
