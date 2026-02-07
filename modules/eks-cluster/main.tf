@@ -2,28 +2,20 @@
 # EKS Data + Auth
 ##############################################
 
-
-data "aws_eks_cluster" "main" {
-  name = var.cluster_name
-}
-
 data "aws_eks_cluster_auth" "main" {
   name = var.cluster_name
 }
 
 provider "kubernetes" {
-  # Use the DATA SOURCE here, not the module output
   host                   = module.eks.cluster_endpoint
-  cluster_ca_certificate = base64decode(data.aws_eks_cluster.certificate_authority_data)
-  
+  cluster_ca_certificate = base64decode(module.eks.cluster_certificate_authority_data)
+
   exec {
     api_version = "client.authentication.k8s.io/v1beta1"
     command     = "aws"
-    # Use the variable directly for the name
     args        = ["eks", "get-token", "--cluster-name", module.eks.cluster_name, "--region", var.region]
   }
 }
-
 
 ##############################################
 # EKS Control Plane + Node Groups + Add-ons
@@ -39,65 +31,46 @@ module "eks" {
   enable_cluster_creator_admin_permissions = true
   cluster_endpoint_public_access           = true
 
-  # ✅ Let Terraform manage add-ons
-  bootstrap_self_managed_addons = true
-
   vpc_id                   = var.vpc_id
   subnet_ids               = var.private_subnets
   control_plane_subnet_ids = var.private_subnets
 
   cluster_additional_security_group_ids = var.security_group_ids
 
-  # ✅ Enable CloudWatch logging
   create_cloudwatch_log_group = true
   cluster_enabled_log_types   = ["api", "audit", "authenticator", "controllerManager", "scheduler"]
 
-  ##############################################
-  # Core Add-ons Always include vpc-cni
-  ##############################################
-  module "eks" {
-  source  = "terraform-aws-modules/eks/aws"
-  version = "~> 20.0"
-
-  cluster_name    = var.cluster_name
-  cluster_version = "1.29"
-
-  # Use the Resource Name for the provider to avoid the "Data Source" crash
-  # (Make sure your kubernetes provider block uses module.eks.cluster_endpoint)
-
   cluster_addons = {
     "vpc-cni" = {
-      most_recent              = true
-      # Ensure this variable is actually being passed in your GitHub Action!
-      service_account_role_arn = var.cni_role_arn
+      most_recent                 = true
+      service_account_role_arn    = var.cni_role_arn
       resolve_conflicts_on_create = "OVERWRITE"
       resolve_conflicts_on_update = "OVERWRITE"
     }
     "coredns" = {
-      most_recent              = true
+      most_recent                 = true
       resolve_conflicts_on_create = "OVERWRITE"
       resolve_conflicts_on_update = "OVERWRITE"
     }
     "kube-proxy" = {
-      most_recent              = true
+      most_recent                 = true
       resolve_conflicts_on_create = "OVERWRITE"
       resolve_conflicts_on_update = "OVERWRITE"
     }
     "eks-pod-identity-agent" = {
-      most_recent              = true
+      most_recent                 = true
       resolve_conflicts_on_create = "OVERWRITE"
       resolve_conflicts_on_update = "OVERWRITE"
     }
     "aws-ebs-csi-driver" = {
-      most_recent              = true
+      most_recent                 = true
       resolve_conflicts_on_create = "OVERWRITE"
       resolve_conflicts_on_update = "OVERWRITE"
     }
   }
-}
 
   ##############################################
-  # Managed Node Groups - Best Practice
+  # Managed Node Groups
   ##############################################
   eks_managed_node_group_defaults = {
     ami_type       = "AL2023_x86_64_STANDARD"
@@ -116,13 +89,11 @@ module "eks" {
   }
 
   eks_managed_node_groups = {
-    eks-node-group-1 = {
-      # Uses all defaults
-    }
+    eks-node-group-1 = {}
   }
 
   ##############################################
-  # Access entries (IAM Identity Center or user/role mapping)
+  # Access entries
   ##############################################
   access_entries = {
     fusi = {
@@ -152,7 +123,7 @@ module "eks" {
 }
 
 ##############################################
-# RBAC Bindings with depends_on
+# RBAC Bindings
 ##############################################
 
 resource "kubernetes_cluster_role_binding_v1" "platform_admins_binding" {
@@ -196,7 +167,7 @@ resource "kubernetes_cluster_role_binding_v1" "eks_admins_binding" {
 }
 
 ##############################################
-# Kubernetes Namespaces with depends_on
+# Kubernetes Namespaces
 ##############################################
 
 resource "kubernetes_namespace_v1" "fintech" {
@@ -227,7 +198,7 @@ resource "kubernetes_namespace_v1" "monitoring" {
   depends_on = [module.eks]
 }
 
-resource "kubernetes_namespace" "fintech_dev" {
+resource "kubernetes_namespace_v1" "fintech_dev" {
   metadata {
     name = "fintech-dev"
     annotations = {
