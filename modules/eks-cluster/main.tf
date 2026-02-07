@@ -3,24 +3,32 @@
 ##############################################
 
 
-data "aws_eks_cluster" "main" {
-  name = var.cluster_name
+# This is the resource that creates the cluster
+resource "aws_eks_cluster" "main" {
+  name     = var.cluster_name
+  role_arn = var.cluster_role_arn
+  
+  vpc_config {
+    subnet_ids = var.subnet_ids
+  }
 }
 
+# We still use the Auth data source as it usually works fine, 
+# but we link it to the resource name to ensure correct ordering.
 data "aws_eks_cluster_auth" "main" {
-  name = var.cluster_name
+  name = aws_eks_cluster.main.name
 }
 
 provider "kubernetes" {
-  # Use the DATA SOURCE here, not the module output
-  host                   = data.aws_eks_cluster.main.endpoint
-  cluster_ca_certificate = base64decode(data.aws_eks_cluster.main.certificate_authority[0].data)
+  # Use the RESOURCE attributes here, not the data source
+  host                   = aws_eks_cluster.main.endpoint
+  cluster_ca_certificate = base64decode(aws_eks_cluster.main.certificate_authority[0].data)
   
   exec {
     api_version = "client.authentication.k8s.io/v1beta1"
     command     = "aws"
-    # Use the variable directly for the name
-    args        = ["eks", "get-token", "--cluster-name", var.cluster_name, "--region", var.region]
+    # Reference the resource name to create a dependency
+    args        = ["eks", "get-token", "--cluster-name", aws_eks_cluster.main.name, "--region", var.region]
   }
 }
 
@@ -83,7 +91,7 @@ module "eks" {
     aws-ebs-csi-driver = {
       most_recent       = true
       resolve_conflicts_on_create = "OVERWRITE"
-      resolve_conflicts_on_create = "OVERWRITE"
+      
     }
   }
 

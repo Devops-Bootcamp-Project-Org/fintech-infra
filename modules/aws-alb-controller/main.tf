@@ -2,7 +2,7 @@
 # Service Account for IRSA
 ################################################################################
 
-resource "kubernetes_service_account" "service_account" {
+resource "kubernetes_service_account_v1" "service_account" {
   metadata {
     name      = "aws-load-balancer-controller"
     namespace = "kube-system"
