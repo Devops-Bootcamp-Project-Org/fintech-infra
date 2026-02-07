@@ -59,27 +59,31 @@ module "eks" {
     vpc-cni = {
       most_recent              = true
       service_account_role_arn = var.cni_role_arn
-      resolve_conflicts        = "OVERWRITE"
+      resolve_conflicts_on_update        = "OVERWRITE"
     }
 
     coredns = {
       most_recent       = true
-      resolve_conflicts = "OVERWRITE"
+      resolve_conflicts_on_create = "OVERWRITE"
+      resolve_conflicts_on_update = "OVERWRITE"
     }
 
     kube-proxy = {
       most_recent       = true
-      resolve_conflicts = "OVERWRITE"
+      resolve_conflicts_on_create = "OVERWRITE"
+      resolve_conflicts_on_create = "OVERWRITE"
     }
 
     eks-pod-identity-agent = {
       most_recent       = true
-      resolve_conflicts = "OVERWRITE"
+      resolve_conflicts_on_create = "OVERWRITE"
+      resolve_conflicts_on_create = "OVERWRITE"
     }
 
     aws-ebs-csi-driver = {
       most_recent       = true
-      resolve_conflicts = "OVERWRITE"
+      resolve_conflicts_on_create = "OVERWRITE"
+      resolve_conflicts_on_create = "OVERWRITE"
     }
   }
 
